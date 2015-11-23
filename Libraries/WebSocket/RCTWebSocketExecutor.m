@@ -39,16 +39,22 @@ RCT_EXPORT_MODULE()
 
 - (instancetype)init
 {
-  return [self initWithURL:[RCTConvert NSURL:@"http://localhost:8081/debugger-proxy"]];
+  NSAssert(false, @"Don't use this. Use initWithURL instead");
+  return [self initWithURL:nil];
 }
 
 - (instancetype)initWithURL:(NSURL *)URL
 {
   RCTAssertParam(URL);
 
+  // Set the debugger's URL from the provided base URL.
+  NSURLComponents *debuggerURL = [[NSURLComponents alloc] initWithURL:URL resolvingAgainstBaseURL:YES];
+  debuggerURL.path = @"/debugger-proxy";
+
   if ((self = [super init])) {
-    _url = URL;
+    _url = debuggerURL.URL;
   }
+
   return self;
 }
 

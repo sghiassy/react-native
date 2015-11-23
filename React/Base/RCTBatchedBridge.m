@@ -264,9 +264,17 @@ RCT_EXTERN NSArray<Class> *RCTGetModuleClasses(void);
                    moduleName, [modulesByName[moduleName] class]);
        }
      } else {
-       // Module name hasn't been used before, so go ahead and instantiate
-       module = [moduleClass new];
+       // Some modules should use the initWithURL initializer instead of the regular init initializer.
+       BOOL shouldInitWithURL = ([moduleName isEqualToString:@"RCTWebSocketExecutor"]) ||
+                                ([moduleName isEqualToString:@"RCTDevMenu"]);
+
+       if (shouldInitWithURL) {
+         module = [[moduleClass alloc] initWithURL:self.parentBridge.bundleURL];
+       } else {
+         module = [[moduleClass alloc] init];
+       }
      }
+
      if (module) {
        modulesByName[moduleName] = module;
      }
