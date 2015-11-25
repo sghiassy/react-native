@@ -275,10 +275,18 @@ static void RCTInstallJSCProfiler(RCTBridge *bridge, JSContextRef context)
 
 - (instancetype)init
 {
+  NSAssert(0, @"Don't use this. Use initWithURL instead");
+  return [self initWithURL:nil];
+}
+
+- (instancetype)initWithURL:(NSURL *)url
+{
   NSThread *javaScriptThread = [[NSThread alloc] initWithTarget:[self class]
                                                        selector:@selector(runRunLoopThread)
                                                          object:nil];
-  javaScriptThread.name = @"com.facebook.React.JavaScript";
+  NSDictionary *queryParameters = [RCTContextExecutor queryDictionaryForURL:url];
+  NSString *threadName = [NSString stringWithFormat:@"rct.%@", [queryParameters objectForKey:@"domain"]];
+  javaScriptThread.name = threadName;
   javaScriptThread.threadPriority = [NSThread mainThread].threadPriority;
   [javaScriptThread start];
 
@@ -629,6 +637,23 @@ RCT_EXPORT_METHOD(setContextName:(nonnull NSString *)name)
     JSGlobalContextSetName(_context.ctx, JSName);
     JSStringRelease(JSName);
   }
+}
+
+#pragma mark - Helper Functions
+
++ (NSDictionary *)queryDictionaryForURL:(NSURL *)url {
+  NSString *queryString = [url query];
+  NSArray *pairs = [queryString componentsSeparatedByString:@"&"];
+  NSMutableDictionary *kvPairs = [NSMutableDictionary dictionary];
+
+  for (NSString *pair in pairs) {
+    NSArray *bits = [pair componentsSeparatedByString:@"="];
+    NSString *key = [[bits objectAtIndex:0] stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+    NSString *value = [[bits objectAtIndex:1] stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+    [kvPairs setObject:value forKey:key];
+  }
+
+  return kvPairs.copy;
 }
 
 @end
