@@ -182,7 +182,7 @@ RCT_EXPORT_MODULE()
                              object:nil];
 
     _defaults = [NSUserDefaults standardUserDefaults];
-    NSDictionary *settings = [_defaults objectForKey:self.devMenuSettingsKey];
+    _settings = [[NSMutableDictionary alloc] initWithDictionary:[_defaults objectForKey:self.devMenuSettingsKey]];
     _extraMenuItems = [NSMutableArray new];
 
     __weak RCTDevMenu *weakSelf = self;
