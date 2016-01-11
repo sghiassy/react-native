@@ -38,19 +38,22 @@ RCT_EXPORT_MODULE()
 
 - (instancetype)init
 {
-  NSUserDefaults *standardDefaults = [NSUserDefaults standardUserDefaults];
-  NSInteger port = [standardDefaults integerForKey:@"websocket-executor-port"] ?: 8081;
-  NSString *URLString = [NSString stringWithFormat:@"http://localhost:%zd/debugger-proxy", port];
-  return [self initWithURL:[RCTConvert NSURL:URLString]];
+  NSAssert(false, @"Don't use this. Use initWithURL instead");
+  return [self initWithURL:nil];
 }
 
 - (instancetype)initWithURL:(NSURL *)URL
 {
   RCTAssertParam(URL);
 
+  // Set the debugger's URL from the provided base URL.
+  NSURLComponents *debuggerURL = [[NSURLComponents alloc] initWithURL:URL resolvingAgainstBaseURL:YES];
+  debuggerURL.path = @"/debugger-proxy";
+
   if ((self = [super init])) {
-    _url = URL;
+    _url = debuggerURL.URL;
   }
+  
   return self;
 }
 
