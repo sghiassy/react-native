@@ -40,9 +40,14 @@ RCT_EXPORT_MODULE()
 {
   RCTAssertParam(URL);
 
+  // Set the debugger's URL from the provided base URL.
+  NSURLComponents *debuggerURL = [[NSURLComponents alloc] initWithURL:URL resolvingAgainstBaseURL:YES];
+  debuggerURL.path = @"/debugger-proxy";
+
   if ((self = [self init])) {
-    _url = URL;
+    _url = debuggerURL.URL;
   }
+  
   return self;
 }
 
