@@ -279,7 +279,7 @@ RCT_EXTERN NSArray<Class> *RCTGetModuleClasses(void);
         // Some modules should use the initWithURL initializer instead of the regular init initializer.
         BOOL shouldInitWithURL = ([moduleName isEqualToString:@"RCTWebSocketExecutor"]) ||
                                  ([moduleName isEqualToString:@"RCTDevMenu"]) ||
-                                 ([moduleName isEqualToString:@"RCTContextExecutor"]);
+                                 ([moduleName isEqualToString:@"RCTJSCExecutor"]);
 
         if (shouldInitWithURL) {
           module = [[moduleClass alloc] initWithURL:self.parentBridge.bundleURL];
