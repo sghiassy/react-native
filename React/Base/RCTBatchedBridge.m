@@ -25,7 +25,7 @@
 
 #define RCTAssertJSThread() \
   RCTAssert(![NSStringFromClass([_javaScriptExecutor class]) isEqualToString:@"RCTContextExecutor"] || \
-              [[[NSThread currentThread] name] isEqualToString:@"com.facebook.React.JavaScript"], \
+              [[[[NSThread currentThread] name] substringToIndex:3] isEqualToString:@"rct"], \
             @"This method must be called on JS thread")
 
 NSString *const RCTEnqueueNotification = @"RCTEnqueueNotification";
@@ -287,7 +287,17 @@ RCT_EXTERN NSArray<Class> *RCTGetModuleClasses(void);
       // initialized when the bridge first loads.
       if ([moduleClass instanceMethodForSelector:@selector(init)] != objectInitMethod ||
           [moduleClass instancesRespondToSelector:setBridgeSelector]) {
-        module = [moduleClass new];
+        // Some modules should use the initWithURL initializer instead of the regular init initializer.
+        BOOL shouldInitWithURL = ([moduleName isEqualToString:@"RCTWebSocketExecutor"]) ||
+                                 ([moduleName isEqualToString:@"RCTDevMenu"]) ||
+                                 ([moduleName isEqualToString:@"RCTContextExecutor"]);
+                                 
+        if (shouldInitWithURL) {
+          module = [[moduleClass alloc] initWithURL:self.parentBridge.bundleURL];
+        } else {
+          module = [[moduleClass alloc] init];
+        }
+
         if (!module) {
           module = [NSNull null];
         }
