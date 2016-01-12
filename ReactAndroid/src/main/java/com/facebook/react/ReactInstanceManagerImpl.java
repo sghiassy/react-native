@@ -88,6 +88,7 @@ import com.facebook.systrace.Systrace;
   /* accessed from any thread */
   private @Nullable String mJSBundleFile; /* path to JS bundle on file system */
   private final @Nullable String mJSMainModuleName; /* path to JS bundle root on packager server */
+  private final @Nullable String mJSModulePort;
   private final List<ReactPackage> mPackages;
   private final DevSupportManager mDevSupportManager;
   private final boolean mUseDeveloperSupport;
@@ -234,6 +235,7 @@ import com.facebook.systrace.Systrace;
       Context applicationContext,
       @Nullable String jsBundleFile,
       @Nullable String jsMainModuleName,
+      @Nullable String jsModulePort,
       List<ReactPackage> packages,
       boolean useDeveloperSupport,
       @Nullable NotThreadSafeBridgeIdleDebugListener bridgeIdleDebugListener,
@@ -245,6 +247,7 @@ import com.facebook.systrace.Systrace;
     mApplicationContext = applicationContext;
     mJSBundleFile = jsBundleFile;
     mJSMainModuleName = jsMainModuleName;
+    mJSModulePort = jsModulePort;
     mPackages = packages;
     mUseDeveloperSupport = useDeveloperSupport;
     // We need to instantiate DevSupportManager regardless to the useDeveloperSupport option,
@@ -255,6 +258,7 @@ import com.facebook.systrace.Systrace;
         applicationContext,
         mDevInterface,
         mJSMainModuleName,
+        mJSModulePort,
         useDeveloperSupport);
     mBridgeIdleDebugListener = bridgeIdleDebugListener;
     mLifecycleState = initialLifecycleState;

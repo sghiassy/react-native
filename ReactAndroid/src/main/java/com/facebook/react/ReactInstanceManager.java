@@ -155,6 +155,7 @@ public abstract class ReactInstanceManager {
 
     protected @Nullable String mJSBundleFile;
     protected @Nullable String mJSMainModuleName;
+    protected @Nullable String mJSModulePort;
     protected @Nullable NotThreadSafeBridgeIdleDebugListener mBridgeIdleDebugListener;
     protected @Nullable Application mApplication;
     protected boolean mUseDeveloperSupport;
@@ -203,6 +204,11 @@ public abstract class ReactInstanceManager {
      */
     public Builder setJSMainModuleName(String jsMainModuleName) {
       mJSMainModuleName = jsMainModuleName;
+      return this;
+    }
+
+    public Builder setJSModulePort(String jsModulePort) {
+      mJSModulePort = jsModulePort;
       return this;
     }
 
@@ -282,6 +288,7 @@ public abstract class ReactInstanceManager {
               "Application property has not been set with this builder"),
           mJSBundleFile,
           mJSMainModuleName,
+          mJSModulePort,
           mPackages,
           mUseDeveloperSupport,
           mBridgeIdleDebugListener,

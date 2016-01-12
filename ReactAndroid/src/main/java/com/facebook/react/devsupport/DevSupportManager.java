@@ -95,6 +95,7 @@ public class DevSupportManager implements NativeModuleCallExceptionHandler {
       new LinkedHashMap<>();
   private final ReactInstanceDevCommandsHandler mReactInstanceCommandsHandler;
   private final @Nullable String mJSAppBundleName;
+  private final @Nullable String mJSModulePort;
   private final File mJSBundleTempFile;
 
   private @Nullable RedBoxDialog mRedBoxDialog;
@@ -113,10 +114,12 @@ public class DevSupportManager implements NativeModuleCallExceptionHandler {
       Context applicationContext,
       ReactInstanceDevCommandsHandler reactInstanceCommandsHandler,
       @Nullable String packagerPathForJSBundleName,
+      @Nullable String jsModulePort,
       boolean enableOnCreate) {
     mReactInstanceCommandsHandler = reactInstanceCommandsHandler;
     mApplicationContext = applicationContext;
     mJSAppBundleName = packagerPathForJSBundleName;
+    mJSModulePort = jsModulePort;
     mDevSettings = new DevInternalSettings(applicationContext, this);
     mDevServerHelper = new DevServerHelper(mDevSettings);
 
