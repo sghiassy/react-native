@@ -97,6 +97,7 @@ public class DevServerHelper {
 
   public DevServerHelper(DevInternalSettings settings, String jsServerPort) {
     mSettings = settings;
+    mJSServerPort = jsServerPort;
     mClient = new OkHttpClient();
     mClient.setConnectTimeout(HTTP_CONNECT_TIMEOUT_MS, TimeUnit.MILLISECONDS);
 
