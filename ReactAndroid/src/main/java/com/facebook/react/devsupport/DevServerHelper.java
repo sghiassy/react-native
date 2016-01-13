@@ -50,9 +50,11 @@ public class DevServerHelper {
   public static final String RELOAD_APP_EXTRA_JS_PROXY = "jsproxy";
   private static final String RELOAD_APP_ACTION_SUFFIX = ".RELOAD_APP_ACTION";
 
-  private static final String EMULATOR_LOCALHOST = "10.0.2.2:8081";
-  private static final String GENYMOTION_LOCALHOST = "10.0.3.2:8081";
-  private static final String DEVICE_LOCALHOST = "localhost:8081";
+  private static final String EMULATOR_LOCALHOST = "10.0.2.2:%s";
+  private static final String GENYMOTION_LOCALHOST = "10.0.3.2:%s";
+  private static final String DEVICE_LOCALHOST = "localhost:%s";
+
+  private static final String DEFAULT_PORT = "8081";
 
   private static final String BUNDLE_URL_FORMAT =
       "http://%s/%s.bundle?platform=android&dev=%s";
@@ -87,12 +89,13 @@ public class DevServerHelper {
   private final DevInternalSettings mSettings;
   private final OkHttpClient mClient;
   private final Handler mRestartOnChangePollingHandler;
+  private final String mJSServerPort;
 
   private boolean mOnChangePollingEnabled;
   private @Nullable OkHttpClient mOnChangePollingClient;
   private @Nullable OnServerContentChangeListener mOnServerContentChangeListener;
 
-  public DevServerHelper(DevInternalSettings settings) {
+  public DevServerHelper(DevInternalSettings settings, String jsServerPort) {
     mSettings = settings;
     mClient = new OkHttpClient();
     mClient.setConnectTimeout(HTTP_CONNECT_TIMEOUT_MS, TimeUnit.MILLISECONDS);
@@ -137,19 +140,22 @@ public class DevServerHelper {
       return Assertions.assertNotNull(hostFromSettings);
     }
 
+    final String serverPort = TextUtils.isEmpty(mJSServerPort)
+      ? DEFAULT_PORT : mJSServerPort;
+
     // Since genymotion runs in vbox it use different hostname to refer to adb host.
     // We detect whether app runs on genymotion and replace js bundle server hostname accordingly
     if (isRunningOnGenymotion()) {
-      return GENYMOTION_LOCALHOST;
+      return String.format(GENYMOTION_LOCALHOST, serverPort);
     }
     if (isRunningOnStockEmulator()) {
-      return EMULATOR_LOCALHOST;
+      return String.format(EMULATOR_LOCALHOST, serverPort);
     }
     FLog.w(
         ReactConstants.TAG,
         "You seem to be running on device. Run 'adb reverse tcp:8081 tcp:8081' " +
             "to forward the debug server's port to the device.");
-    return DEVICE_LOCALHOST;
+    return String.format(DEVICE_LOCALHOST, serverPort);
   }
 
   private boolean isRunningOnGenymotion() {

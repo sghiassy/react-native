@@ -154,6 +154,7 @@ public abstract class ReactInstanceManager {
 
     protected @Nullable String mJSBundleFile;
     protected @Nullable String mJSMainModuleName;
+    protected @Nullable String mJSServerPort;
     protected @Nullable NotThreadSafeBridgeIdleDebugListener mBridgeIdleDebugListener;
     protected @Nullable Application mApplication;
     protected boolean mUseDeveloperSupport;
@@ -201,6 +202,15 @@ public abstract class ReactInstanceManager {
      */
     public Builder setJSMainModuleName(String jsMainModuleName) {
       mJSMainModuleName = jsMainModuleName;
+      return this;
+    }
+
+    /**
+     * Set the port used by the development server.
+     * If not set, the default port will be used: 8081.
+     */
+    public Builder setJSServerPort(String jsServerPort) {
+      mJSServerPort = jsServerPort;
       return this;
     }
 
@@ -270,6 +280,7 @@ public abstract class ReactInstanceManager {
               "Application property has not been set with this builder"),
           mJSBundleFile,
           mJSMainModuleName,
+          mJSServerPort,
           mPackages,
           mUseDeveloperSupport,
           mBridgeIdleDebugListener,
