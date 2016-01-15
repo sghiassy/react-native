@@ -155,6 +155,7 @@ public abstract class ReactInstanceManager {
     protected @Nullable String mJSBundleFile;
     protected @Nullable String mJSMainModuleName;
     protected @Nullable String mJSServerPort;
+    protected @Nullable String mJSServerDomain;
     protected @Nullable NotThreadSafeBridgeIdleDebugListener mBridgeIdleDebugListener;
     protected @Nullable Application mApplication;
     protected boolean mUseDeveloperSupport;
@@ -202,6 +203,14 @@ public abstract class ReactInstanceManager {
      */
     public Builder setJSMainModuleName(String jsMainModuleName) {
       mJSMainModuleName = jsMainModuleName;
+      return this;
+    }
+
+    /**
+     * The server's domain name.
+     */
+    public Builder setJSServerDomain(String jsServerDomain) {
+      mJSServerDomain = jsServerDomain;
       return this;
     }
 
@@ -280,6 +289,7 @@ public abstract class ReactInstanceManager {
               "Application property has not been set with this builder"),
           mJSBundleFile,
           mJSMainModuleName,
+          mJSServerDomain,
           mJSServerPort,
           mPackages,
           mUseDeveloperSupport,

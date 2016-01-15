@@ -75,7 +75,7 @@ import com.facebook.react.modules.debug.DeveloperSettings;
 public class DevSupportManager implements NativeModuleCallExceptionHandler {
 
   private static final int JAVA_ERROR_COOKIE = -1;
-  private static final String JS_BUNDLE_FILE_NAME = "ReactNativeDevBundle.js";
+  private static final String JS_BUNDLE_FILE_NAME_FORMAT = "ReactNativeDevBundle:%s.js";
 
   private static final String EXOPACKAGE_LOCATION_FORMAT
       = "/data/local/tmp/exopackage/%s//secondary-dex";
@@ -147,7 +147,8 @@ public class DevSupportManager implements NativeModuleCallExceptionHandler {
     // start reading first reload output while the second reload starts writing to the same
     // file. As this should only be the case in dev mode we leave it as it is.
     // TODO(6418010): Fix readers-writers problem in debug reload from HTTP server
-    mJSBundleTempFile = new File(applicationContext.getFilesDir(), JS_BUNDLE_FILE_NAME);
+    final String jsBundleTempFileName = String.format(JS_BUNDLE_FILE_NAME_FORMAT, jsServerPort);
+    mJSBundleTempFile = new File(applicationContext.getFilesDir(), jsBundleTempFileName);
 
     setDevSupportEnabled(enableOnCreate);
   }

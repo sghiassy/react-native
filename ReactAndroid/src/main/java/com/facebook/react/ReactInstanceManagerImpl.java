@@ -86,6 +86,7 @@ import com.facebook.systrace.Systrace;
   /* accessed from any thread */
   private @Nullable String mJSBundleFile; /* path to JS bundle on file system */
   private final @Nullable String mJSMainModuleName; /* path to JS bundle root on packager server */
+  private final @Nullable String mJSServerDomain; /* the server's domain name */
   private final @Nullable String mJSServerPort; /* the port used by the development server */
   private final List<ReactPackage> mPackages;
   private final DevSupportManager mDevSupportManager;
@@ -192,6 +193,7 @@ import com.facebook.systrace.Systrace;
       Context applicationContext,
       @Nullable String jsBundleFile,
       @Nullable String jsMainModuleName,
+      @Nullable String jsServerDomain,
       @Nullable String jsServerPort,
       List<ReactPackage> packages,
       boolean useDeveloperSupport,
@@ -203,6 +205,7 @@ import com.facebook.systrace.Systrace;
     mApplicationContext = applicationContext;
     mJSBundleFile = jsBundleFile;
     mJSMainModuleName = jsMainModuleName;
+    mJSServerDomain = jsServerDomain;
     mJSServerPort = jsServerPort;
     mPackages = packages;
     mUseDeveloperSupport = useDeveloperSupport;
@@ -657,7 +660,8 @@ import com.facebook.systrace.Systrace;
     }
 
     CatalystInstanceImpl.Builder catalystInstanceBuilder = new CatalystInstanceImpl.Builder()
-        .setCatalystQueueConfigurationSpec(CatalystQueueConfigurationSpec.createDefault())
+        .setCatalystQueueConfigurationSpec(
+            CatalystQueueConfigurationSpec.createDefault(mJSServerDomain, mJSServerPort))
         .setJSExecutor(jsExecutor)
         .setRegistry(nativeModuleRegistry)
         .setJSModulesConfig(javaScriptModulesConfig)

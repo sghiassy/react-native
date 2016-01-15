@@ -119,8 +119,10 @@ public class DevServerHelper {
   /**
    * @return the host to use when connecting to the bundle server from the host itself.
    */
-  private static String getHostForJSProxy() {
-    return DEVICE_LOCALHOST;
+  private static String getHostForJSProxy(String serverPort) {
+    final String port = TextUtils.isEmpty(serverPort)
+        ? DEFAULT_PORT : serverPort;
+    return String.format(DEVICE_LOCALHOST, port);
   }
 
   /**
@@ -372,6 +374,6 @@ public class DevServerHelper {
     // The host IP we use when connecting to the JS bundle server from the emulator is not the
     // same as the one needed to connect to the same server from the Chrome proxy running on the
     // host itself.
-    return createBundleURL(getHostForJSProxy(), mainModuleName, getDevMode());
+    return createBundleURL(getHostForJSProxy(mJSServerPort), mainModuleName, getDevMode());
   }
 }
