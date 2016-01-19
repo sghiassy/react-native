@@ -108,6 +108,14 @@ public abstract class ReactInstanceManager {
   public abstract String getSourceUrl();
 
   /**
+   * Attach given {@param rootView} to a catalyst instance manager and start JS application by
+   * setting the {@param rootView} as attached to a running service, so it won't try to re-attach
+   * after being measured for rendering, or to detach from the catalyst instance once the view is
+   * detached from the window.
+   */
+  public abstract void attachToCatalystInstance(ReactRootView rootView);
+
+  /**
    * Attach given {@param rootView} to a catalyst instance manager and start JS application using
    * JS module provided by {@link ReactRootView#getJSModuleName}. If the react context is currently
    * being (re)-created, or if react context has not been created yet, the JS application associated

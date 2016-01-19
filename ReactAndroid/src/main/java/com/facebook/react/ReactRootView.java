@@ -67,6 +67,7 @@ public class ReactRootView extends SizeMonitoringFrameLayout implements RootView
   private boolean mAttachScheduled = false;
   private boolean mIsAttachedToWindow = false;
   private boolean mIsAttachedToInstance = false;
+  private boolean mIsAttachedToRunningService = false;
 
   public ReactRootView(Context context) {
     super(context);
@@ -78,6 +79,14 @@ public class ReactRootView extends SizeMonitoringFrameLayout implements RootView
 
   public ReactRootView(Context context, AttributeSet attrs, int defStyle) {
     super(context, attrs, defStyle);
+  }
+
+  public void setIsAttachedToInstance(boolean isAttachedToInstance) {
+    mIsAttachedToInstance = isAttachedToInstance;
+  }
+
+  public void setIsAttachedToRunningService(boolean isAttachedToRunningService) {
+    mIsAttachedToRunningService = isAttachedToRunningService;
   }
 
   @Override
@@ -104,9 +113,11 @@ public class ReactRootView extends SizeMonitoringFrameLayout implements RootView
       UiThreadUtil.runOnUiThread(new Runnable() {
         @Override
         public void run() {
-          Assertions.assertNotNull(mReactInstanceManager)
-              .attachMeasuredRootView(ReactRootView.this);
-          mIsAttachedToInstance = true;
+          if (!mIsAttachedToRunningService) {
+            Assertions.assertNotNull(mReactInstanceManager)
+                .attachMeasuredRootView(ReactRootView.this);
+            mIsAttachedToInstance = true;
+          }
           getViewTreeObserver().addOnGlobalLayoutListener(mKeyboardListener);
         }
       });
@@ -296,8 +307,10 @@ public class ReactRootView extends SizeMonitoringFrameLayout implements RootView
     mIsAttachedToWindow = false;
 
     if (mReactInstanceManager != null && !mAttachScheduled) {
-      mReactInstanceManager.detachRootView(this);
-      mIsAttachedToInstance = false;
+      if (!mIsAttachedToRunningService) {
+        mReactInstanceManager.detachRootView(this);
+        mIsAttachedToInstance = false;
+      }
       getViewTreeObserver().removeOnGlobalLayoutListener(mKeyboardListener);
     }
   }
