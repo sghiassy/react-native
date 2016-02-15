@@ -16,6 +16,8 @@
  */
 @interface RCTJSCExecutor : NSObject <RCTJavaScriptExecutor>
 
+- (instancetype)initWithURL:(NSURL *)url;
+
 /**
  * Configures the executor to run JavaScript on a specific thread with a given JS context.
  * You probably don't want to use this; use -init instead.
