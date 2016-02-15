@@ -59,7 +59,7 @@ public class ReactTestHelper {
       @Override
       public CatalystInstance build() {
         return new CatalystInstanceImpl.Builder()
-          .setReactQueueConfigurationSpec(ReactQueueConfigurationSpec.createDefault())
+          .setReactQueueConfigurationSpec(ReactQueueConfigurationSpec.createDefault(null, null))
           .setJSExecutor(new JSCJavaScriptExecutor())
           .setRegistry(mNativeModuleRegistryBuilder.build())
           .setJSModulesConfig(mJSModulesConfigBuilder.build())
