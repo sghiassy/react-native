@@ -38,7 +38,7 @@ public class ReactTestHelper {
 
     public CatalystInstanceImpl build() {
       CatalystInstanceImpl instance = mTestCase.new ReactTestInstanceBuilder()
-          .setCatalystQueueConfigurationSpec(CatalystQueueConfigurationSpec.createDefault())
+          .setCatalystQueueConfigurationSpec(CatalystQueueConfigurationSpec.createDefault(null, null))
           .setJSExecutor(new JSCJavaScriptExecutor())
           .setRegistry(mNativeModuleRegistryBuilder.build())
           .setJSModulesConfig(mJSModulesConfigBuilder.build())
