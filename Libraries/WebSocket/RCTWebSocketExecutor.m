@@ -36,6 +36,12 @@ typedef void (^RCTWSMessageCallback)(NSError *error, NSDictionary<NSString *, id
 
 RCT_EXPORT_MODULE()
 
+- (instancetype)init
+{
+    NSAssert(false, @"Don't use this. Use initWithURL instead");
+    return [self initWithURL:nil];
+}
+
 - (instancetype)initWithURL:(NSURL *)URL
 {
   RCTAssertParam(URL);
@@ -44,7 +50,7 @@ RCT_EXPORT_MODULE()
   NSURLComponents *debuggerURL = [[NSURLComponents alloc] initWithURL:URL resolvingAgainstBaseURL:YES];
   debuggerURL.path = @"/debugger-proxy";
 
-  if ((self = [self init])) {
+  if ((self = [super init])) {
     _url = debuggerURL.URL;
   }
   return self;
