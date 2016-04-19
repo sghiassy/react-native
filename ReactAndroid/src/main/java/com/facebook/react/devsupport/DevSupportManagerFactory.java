@@ -25,6 +25,8 @@ public class DevSupportManagerFactory {
       Context applicationContext,
       ReactInstanceDevCommandsHandler reactInstanceCommandsHandler,
       @Nullable String packagerPathForJSBundleName,
+      @Nullable String jsServerDomain,
+      @Nullable String jsServerPort,
       boolean enableOnCreate) {
     if (!enableOnCreate) {
       return new DisabledDevSupportManager();
@@ -45,11 +47,15 @@ public class DevSupportManagerFactory {
               Context.class,
               ReactInstanceDevCommandsHandler.class,
               String.class,
+              String.class,
+              String.class,
               boolean.class);
       return (DevSupportManager) constructor.newInstance(
           applicationContext,
           reactInstanceCommandsHandler,
           packagerPathForJSBundleName,
+          jsServerDomain,
+          jsServerPort,
           true);
     } catch (Exception e) {
       throw new RuntimeException(

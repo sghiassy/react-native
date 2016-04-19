@@ -83,14 +83,16 @@ public class DevServerHelper {
   private final DevInternalSettings mSettings;
   private final OkHttpClient mClient;
   private final Handler mRestartOnChangePollingHandler;
+  private final String mJSServerPort;
 
   private boolean mOnChangePollingEnabled;
   private @Nullable OkHttpClient mOnChangePollingClient;
   private @Nullable OnServerContentChangeListener mOnServerContentChangeListener;
   private @Nullable Call mDownloadBundleFromURLCall;
 
-  public DevServerHelper(DevInternalSettings settings) {
+  public DevServerHelper(DevInternalSettings settings, String jsServerPort) {
     mSettings = settings;
+    mJSServerPort = jsServerPort;
     mClient = new OkHttpClient();
     mClient.setConnectTimeout(HTTP_CONNECT_TIMEOUT_MS, TimeUnit.MILLISECONDS);
 
@@ -112,8 +114,10 @@ public class DevServerHelper {
   /**
    * @return the host to use when connecting to the bundle server from the host itself.
    */
-  private static String getHostForJSProxy() {
-    return AndroidInfoHelpers.DEVICE_LOCALHOST;
+  private static String getHostForJSProxy(String serverPort) {
+    final String port = TextUtils.isEmpty(serverPort)
+        ? AndroidInfoHelpers.DEFAULT_PORT : serverPort;
+    return String.format(AndroidInfoHelpers.DEVICE_LOCALHOST, port);
   }
 
   /**
@@ -149,7 +153,7 @@ public class DevServerHelper {
       return Assertions.assertNotNull(hostFromSettings);
     }
 
-    String host = AndroidInfoHelpers.getServerHost();
+    String host = AndroidInfoHelpers.getServerHost(mJSServerPort);
 
     if (host.equals(AndroidInfoHelpers.DEVICE_LOCALHOST)) {
       FLog.w(
@@ -400,6 +404,6 @@ public class DevServerHelper {
     // The host IP we use when connecting to the JS bundle server from the emulator is not the
     // same as the one needed to connect to the same server from the Chrome proxy running on the
     // host itself.
-    return createBundleURL(getHostForJSProxy(), mainModuleName, getDevMode(), getHMR(), getJSMinifyMode());
+    return createBundleURL(getHostForJSProxy(mJSServerPort), mainModuleName, getDevMode(), getHMR(), getJSMinifyMode());
   }
 }

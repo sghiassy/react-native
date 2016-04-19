@@ -9,6 +9,8 @@
 
 package com.facebook.react.bridge.queue;
 
+import android.text.TextUtils;
+
 import javax.annotation.Nullable;
 
 import com.facebook.infer.annotation.Assertions;
@@ -43,12 +45,24 @@ public class ReactQueueConfigurationSpec {
     return new Builder();
   }
 
-  public static ReactQueueConfigurationSpec createDefault() {
+  public static ReactQueueConfigurationSpec createDefault(String serverDomain, String serverPort) {
     return builder()
-        .setJSQueueThreadSpec(MessageQueueThreadSpec.newBackgroundThreadSpec("js"))
-        .setNativeModulesQueueThreadSpec(
-            MessageQueueThreadSpec.newBackgroundThreadSpec("native_modules"))
+        .setJSQueueThreadSpec(MessageQueueThreadSpec.newBackgroundThreadSpec(
+                generateThreadName("js", serverDomain, serverPort)))
+        .setNativeModulesQueueThreadSpec(MessageQueueThreadSpec.newBackgroundThreadSpec(
+                generateThreadName("native_modules", serverDomain, serverPort)))
         .build();
+  }
+
+  private static String generateThreadName(String threadType, String serverDomain, String serverPort) {
+    StringBuilder stringBuilder = new StringBuilder(threadType);
+    if (!TextUtils.isEmpty(serverDomain)) {
+      stringBuilder.append("_").append(serverDomain);
+    }
+    if (!TextUtils.isEmpty(serverPort)) {
+      stringBuilder.append(":").append(serverPort);
+    }
+    return stringBuilder.toString();
   }
 
   public static class Builder {
