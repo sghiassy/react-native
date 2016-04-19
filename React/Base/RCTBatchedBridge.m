@@ -26,7 +26,7 @@
 
 #define RCTAssertJSThread() \
   RCTAssert(![NSStringFromClass([_javaScriptExecutor class]) isEqualToString:@"RCTJSCExecutor"] || \
-              [[[NSThread currentThread] name] isEqualToString:RCTJSCThreadName], \
+              [[[[NSThread currentThread] name] substringToIndex:3] isEqualToString:@"rct"], \
             @"This method must be called on JS thread")
 
 /**
@@ -321,9 +321,21 @@ RCT_EXTERN NSArray<Class> *RCTGetModuleClasses(void);
       }
     }
 
-    // Instantiate moduleData (TODO: can we defer this until config generation?)
-    moduleData = [[RCTModuleData alloc] initWithModuleClass:moduleClass
+    // Some modules should use the initWithURL initializer instead of the regular init initializer.
+    BOOL shouldInitWithURL = ([moduleName isEqualToString:@"RCTWebSocketExecutor"]) ||
+                             ([moduleName isEqualToString:@"RCTDevMenu"]) ||
+                             ([moduleName isEqualToString:@"RCTJSCExecutor"]);
+
+    if (shouldInitWithURL) {
+      id module = [[moduleClass alloc] initWithURL:self.parentBridge.bundleURL];
+      moduleData = [[RCTModuleData alloc] initWithModuleInstance:module
+                                                          bridge:self];
+    } else {
+      // Instantiate moduleData (TODO: can we defer this until config generation?)
+      moduleData = [[RCTModuleData alloc] initWithModuleClass:moduleClass
                                                      bridge:self];
+    }
+
     moduleDataByName[moduleName] = moduleData;
     [moduleClassesByID addObject:moduleClass];
     [moduleDataByID addObject:moduleData];

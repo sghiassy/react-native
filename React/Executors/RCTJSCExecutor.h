@@ -30,4 +30,6 @@ RCT_EXTERN NSString *const RCTJavaScriptContextCreatedNotification;
  */
 @interface RCTJSCExecutor : NSObject <RCTJavaScriptExecutor>
 
+- (instancetype)initWithURL:(NSURL *)url;
+
 @end
