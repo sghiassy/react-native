@@ -9,8 +9,6 @@
 
 package com.facebook.react;
 
-import javax.annotation.Nullable;
-
 import android.content.Context;
 import android.graphics.Rect;
 import android.os.Bundle;
@@ -30,12 +28,14 @@ import com.facebook.react.common.ReactConstants;
 import com.facebook.react.common.annotations.VisibleForTesting;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.uimanager.DisplayMetricsHolder;
+import com.facebook.react.uimanager.JSTouchDispatcher;
 import com.facebook.react.uimanager.PixelUtil;
 import com.facebook.react.uimanager.RootView;
 import com.facebook.react.uimanager.SizeMonitoringFrameLayout;
-import com.facebook.react.uimanager.JSTouchDispatcher;
 import com.facebook.react.uimanager.UIManagerModule;
 import com.facebook.react.uimanager.events.EventDispatcher;
+
+import javax.annotation.Nullable;
 
 /**
  * Default root view for catalyst apps. Provides the ability to listen for size changes so that a UI
@@ -60,6 +60,7 @@ public class ReactRootView extends SizeMonitoringFrameLayout implements RootView
   private @Nullable OnGenericMotionListener mOnGenericMotionListener;
   private boolean mWasMeasured = false;
   private boolean mIsAttachedToInstance = false;
+  private boolean mIsAttachedToRunningService = false;
   private final JSTouchDispatcher mJSTouchDispatcher = new JSTouchDispatcher(this);
 
   public ReactRootView(Context context) {
@@ -72,6 +73,14 @@ public class ReactRootView extends SizeMonitoringFrameLayout implements RootView
 
   public ReactRootView(Context context, AttributeSet attrs, int defStyle) {
     super(context, attrs, defStyle);
+  }
+
+  public void setIsAttachedToInstance(boolean isAttachedToInstance) {
+    mIsAttachedToInstance = isAttachedToInstance;
+  }
+
+  public void setIsAttachedToRunningService(boolean isAttachedToRunningService) {
+    mIsAttachedToRunningService = isAttachedToRunningService;
   }
 
   @Override
@@ -96,7 +105,10 @@ public class ReactRootView extends SizeMonitoringFrameLayout implements RootView
       UiThreadUtil.runOnUiThread(new Runnable() {
         @Override
         public void run() {
+          if (!mIsAttachedToRunningService) {
           attachToReactInstanceManager();
+          }
+
         }
       });
     }

@@ -9,19 +9,6 @@
 
 package com.facebook.react.devsupport;
 
-import javax.annotation.Nullable;
-
-import java.io.File;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
@@ -34,6 +21,7 @@ import android.content.pm.PackageManager;
 import android.hardware.SensorManager;
 import android.os.Debug;
 import android.os.Environment;
+import android.text.TextUtils;
 import android.view.WindowManager;
 import android.widget.Toast;
 
@@ -52,6 +40,19 @@ import com.facebook.react.common.ShakeDetector;
 import com.facebook.react.common.futures.SimpleSettableFuture;
 import com.facebook.react.devsupport.StackTraceHelper.StackFrame;
 import com.facebook.react.modules.debug.DeveloperSettings;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import javax.annotation.Nullable;
 
 /**
  * Interface for accessing and interacting with development features. Following features
@@ -82,7 +83,7 @@ import com.facebook.react.modules.debug.DeveloperSettings;
 public class DevSupportManagerImpl implements DevSupportManager {
 
   private static final int JAVA_ERROR_COOKIE = -1;
-  private static final String JS_BUNDLE_FILE_NAME = "ReactNativeDevBundle.js";
+  private static final String JS_BUNDLE_FILE_NAME_FORMAT = "ReactNativeDevBundle:%s.js";
 
   private static final String EXOPACKAGE_LOCATION_FORMAT
       = "/data/local/tmp/exopackage/%s//secondary-dex";
@@ -98,6 +99,8 @@ public class DevSupportManagerImpl implements DevSupportManager {
       new LinkedHashMap<>();
   private final ReactInstanceDevCommandsHandler mReactInstanceCommandsHandler;
   private final @Nullable String mJSAppBundleName;
+  private final @Nullable String mJSServerDomain;
+  private final @Nullable String mJSServerPort;
   private final File mJSBundleTempFile;
   private final DefaultNativeModuleCallExceptionHandler mDefaultNativeModuleCallExceptionHandler;
 
@@ -117,12 +120,16 @@ public class DevSupportManagerImpl implements DevSupportManager {
     Context applicationContext,
     ReactInstanceDevCommandsHandler reactInstanceCommandsHandler,
     @Nullable String packagerPathForJSBundleName,
+    @Nullable String jsServerDomain,
+    @Nullable String jsServerPort,
     boolean enableOnCreate) {
     mReactInstanceCommandsHandler = reactInstanceCommandsHandler;
     mApplicationContext = applicationContext;
     mJSAppBundleName = packagerPathForJSBundleName;
+    mJSServerDomain = jsServerDomain;
+    mJSServerPort = jsServerPort;
     mDevSettings = new DevInternalSettings(applicationContext, this);
-    mDevServerHelper = new DevServerHelper(mDevSettings);
+    mDevServerHelper = new DevServerHelper(mDevSettings, jsServerPort);
 
     // Prepare shake gesture detector (will be started/stopped from #reload)
     mShakeDetector = new ShakeDetector(new ShakeDetector.ShakeListener() {
@@ -154,7 +161,8 @@ public class DevSupportManagerImpl implements DevSupportManager {
     // start reading first reload output while the second reload starts writing to the same
     // file. As this should only be the case in dev mode we leave it as it is.
     // TODO(6418010): Fix readers-writers problem in debug reload from HTTP server
-    mJSBundleTempFile = new File(applicationContext.getFilesDir(), JS_BUNDLE_FILE_NAME);
+    final String jsBundleTempFileName = String.format(JS_BUNDLE_FILE_NAME_FORMAT, jsServerPort);
+    mJSBundleTempFile = new File(applicationContext.getFilesDir(), jsBundleTempFileName);
 
     mDefaultNativeModuleCallExceptionHandler = new DefaultNativeModuleCallExceptionHandler();
 
@@ -162,15 +170,19 @@ public class DevSupportManagerImpl implements DevSupportManager {
   }
 
   public DevSupportManagerImpl(
-      Context applicationContext,
-      ReactInstanceDevCommandsHandler reactInstanceCommandsHandler,
-      @Nullable String packagerPathForJSBundleName,
-      boolean enableOnCreate,
-      @Nullable RedBoxHandler redBoxHandler) {
+    Context applicationContext,
+    ReactInstanceDevCommandsHandler reactInstanceCommandsHandler,
+    @Nullable String packagerPathForJSBundleName,
+    @Nullable String jsServerDomain,
+    @Nullable String jsServerPort,
+    boolean enableOnCreate,
+    @Nullable RedBoxHandler redBoxHandler) {
 
     this(applicationContext,
       reactInstanceCommandsHandler,
       packagerPathForJSBundleName,
+      jsServerDomain,
+      jsServerPort,
       enableOnCreate);
 
     mRedBoxHandler = redBoxHandler;
@@ -409,6 +421,7 @@ public class DevSupportManagerImpl implements DevSupportManager {
 
     mDevOptionsDialog =
         new AlertDialog.Builder(mApplicationContext)
+            .setTitle(getDevOptionsDialogTitle())
             .setItems(
                 options.keySet().toArray(new String[0]),
                 new DialogInterface.OnClickListener() {
@@ -427,6 +440,17 @@ public class DevSupportManagerImpl implements DevSupportManager {
             .create();
     mDevOptionsDialog.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
     mDevOptionsDialog.show();
+  }
+
+  private String getDevOptionsDialogTitle() {
+    StringBuilder titleBuilder = new StringBuilder();
+    if (!TextUtils.isEmpty(mJSServerDomain)) {
+      titleBuilder.append(mJSServerDomain);
+      if (!TextUtils.isEmpty(mJSServerPort)) {
+        titleBuilder.append(":").append(mJSServerPort);
+      }
+    }
+    return titleBuilder.toString();
   }
 
   /**

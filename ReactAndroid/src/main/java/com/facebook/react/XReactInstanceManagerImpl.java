@@ -9,16 +9,6 @@
 
 package com.facebook.react;
 
-import javax.annotation.Nullable;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-
 import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
@@ -70,6 +60,16 @@ import com.facebook.react.uimanager.ViewManager;
 import com.facebook.soloader.SoLoader;
 import com.facebook.systrace.Systrace;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+
+import javax.annotation.Nullable;
+
 import static com.facebook.react.bridge.ReactMarkerConstants.BUILD_NATIVE_MODULE_REGISTRY_END;
 import static com.facebook.react.bridge.ReactMarkerConstants.BUILD_NATIVE_MODULE_REGISTRY_START;
 import static com.facebook.react.bridge.ReactMarkerConstants.CREATE_CATALYST_INSTANCE_END;
@@ -109,6 +109,12 @@ import static com.facebook.systrace.Systrace.TRACE_TAG_REACT_JAVA_BRIDGE;
   /* accessed from any thread */
   private @Nullable String mJSBundleFile; /* path to JS bundle on file system */
   private final @Nullable String mJSMainModuleName; /* path to JS bundle root on packager server */
+  private final
+  @Nullable
+  String mJSServerDomain; /* the server's domain name */
+  private final
+  @Nullable
+  String mJSServerPort; /* the port used by the development server */
   private final List<ReactPackage> mPackages;
   private final DevSupportManager mDevSupportManager;
   private final boolean mUseDeveloperSupport;
@@ -265,24 +271,28 @@ import static com.facebook.systrace.Systrace.TRACE_TAG_REACT_JAVA_BRIDGE;
   }
 
   /* package */ XReactInstanceManagerImpl(
-      Context applicationContext,
-      @Nullable Activity currentActivity,
-      @Nullable DefaultHardwareBackBtnHandler defaultHardwareBackBtnHandler,
-      @Nullable String jsBundleFile,
-      @Nullable String jsMainModuleName,
-      List<ReactPackage> packages,
-      boolean useDeveloperSupport,
-      @Nullable NotThreadSafeBridgeIdleDebugListener bridgeIdleDebugListener,
-      LifecycleState initialLifecycleState,
-      UIImplementationProvider uiImplementationProvider,
-      NativeModuleCallExceptionHandler nativeModuleCallExceptionHandler,
-      @Nullable JSCConfig jscConfig) {
+    Context applicationContext,
+    @Nullable Activity currentActivity,
+    @Nullable DefaultHardwareBackBtnHandler defaultHardwareBackBtnHandler,
+    @Nullable String jsBundleFile,
+    @Nullable String jsMainModuleName,
+    @Nullable String jsServerDomain,
+    @Nullable String jsServerPort,
+    List<ReactPackage> packages,
+    boolean useDeveloperSupport,
+    @Nullable NotThreadSafeBridgeIdleDebugListener bridgeIdleDebugListener,
+    LifecycleState initialLifecycleState,
+    UIImplementationProvider uiImplementationProvider,
+    NativeModuleCallExceptionHandler nativeModuleCallExceptionHandler,
+    @Nullable JSCConfig jscConfig) {
 
     this(applicationContext,
       currentActivity,
       defaultHardwareBackBtnHandler,
       jsBundleFile,
       jsMainModuleName,
+      jsServerDomain,
+      jsServerPort,
       packages,
       useDeveloperSupport,
       bridgeIdleDebugListener,
@@ -299,6 +309,8 @@ import static com.facebook.systrace.Systrace.TRACE_TAG_REACT_JAVA_BRIDGE;
     @Nullable DefaultHardwareBackBtnHandler defaultHardwareBackBtnHandler,
     @Nullable String jsBundleFile,
     @Nullable String jsMainModuleName,
+    @Nullable String jsServerDomain,
+    @Nullable String jsServerPort,
     List<ReactPackage> packages,
     boolean useDeveloperSupport,
     @Nullable NotThreadSafeBridgeIdleDebugListener bridgeIdleDebugListener,
@@ -319,6 +331,8 @@ import static com.facebook.systrace.Systrace.TRACE_TAG_REACT_JAVA_BRIDGE;
     mDefaultBackButtonImpl = defaultHardwareBackBtnHandler;
     mJSBundleFile = jsBundleFile;
     mJSMainModuleName = jsMainModuleName;
+    mJSServerDomain = jsServerDomain;
+    mJSServerPort = jsServerPort;
     mPackages = packages;
     mUseDeveloperSupport = useDeveloperSupport;
     mRedBoxHandler = redBoxHandler;
@@ -326,6 +340,8 @@ import static com.facebook.systrace.Systrace.TRACE_TAG_REACT_JAVA_BRIDGE;
         applicationContext,
         mDevInterface,
         mJSMainModuleName,
+      mJSServerDomain,
+      mJSServerPort,
         useDeveloperSupport,
         mRedBoxHandler);
     mBridgeIdleDebugListener = bridgeIdleDebugListener;
@@ -631,6 +647,19 @@ import static com.facebook.systrace.Systrace.TRACE_TAG_REACT_JAVA_BRIDGE;
   }
 
   /**
+   * Attach given {@param rootView} to a catalyst instance manager and start JS application by
+   * setting the {@param rootView} as attached to a running service, so it won't try to re-attach
+   * after being measured for rendering, or to detach from the catalyst instance once the view is
+   * detached from the window.
+   */
+  @Override
+  public void attachToCatalystInstance(ReactRootView rootView) {
+    attachMeasuredRootView(rootView);
+    rootView.setIsAttachedToInstance(true);
+    rootView.setIsAttachedToRunningService(true);
+  }
+
+  /**
    * Attach given {@param rootView} to a catalyst instance manager and start JS application using
    * JS module provided by {@link ReactRootView#getJSModuleName}. If the react context is currently
    * being (re)-created, or if react context has not been created yet, the JS application associated
@@ -866,7 +895,7 @@ import static com.facebook.systrace.Systrace.TRACE_TAG_REACT_JAVA_BRIDGE;
         ? mNativeModuleCallExceptionHandler
         : mDevSupportManager;
     CatalystInstanceImpl.Builder catalystInstanceBuilder = new CatalystInstanceImpl.Builder()
-        .setReactQueueConfigurationSpec(ReactQueueConfigurationSpec.createDefault())
+      .setReactQueueConfigurationSpec(ReactQueueConfigurationSpec.createDefault(mJSServerDomain, mJSServerPort))
         .setJSExecutor(jsExecutor)
         .setRegistry(nativeModuleRegistry)
         .setJSModuleRegistry(jsModulesBuilder.build())

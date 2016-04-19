@@ -56,6 +56,8 @@ public abstract class XReactInstanceManager {
           mDefaultHardwareBackBtnHandler,
           mJSBundleFile,
           mJSMainModuleName,
+        mJSServerDomain,
+        mJSServerPort,
           mPackages,
           mUseDeveloperSupport,
           mBridgeIdleDebugListener,
