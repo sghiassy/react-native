@@ -276,13 +276,21 @@ static BOOL useCustomJSCLibrary = NO;
 
 - (instancetype)init
 {
+  NSAssert(0, @"Don't use this. Use initWithURL instead");
+  return [self initWithURL:nil];
+}
+
+- (instancetype)initWithURL:(NSURL *)url
+{
   if (self = [super init]) {
     _valid = YES;
 
     _javaScriptThread = [[NSThread alloc] initWithTarget:[self class]
                                                 selector:@selector(runRunLoopThread)
                                                   object:nil];
-    _javaScriptThread.name = RCTJSCThreadName;
+    NSDictionary *queryParameters = [RCTJSCExecutor queryDictionaryForURL:url];
+    NSString *threadName = [NSString stringWithFormat:@"rct.%@", [queryParameters objectForKey:@"domain"]];
+    _javaScriptThread.name = threadName;
 
     if ([_javaScriptThread respondsToSelector:@selector(setQualityOfService:)]) {
       [_javaScriptThread setQualityOfService:NSOperationQualityOfServiceUserInteractive];
@@ -889,6 +897,23 @@ RCT_EXPORT_METHOD(setContextName:(nonnull NSString *)name)
     _jscWrapper->JSGlobalContextSetName(_context.ctx, JSName);
     _jscWrapper->JSStringRelease(JSName);
   }
+}
+
+#pragma mark - Helper Functions
+
++ (NSDictionary *)queryDictionaryForURL:(NSURL *)url {
+  NSString *queryString = [url query];
+  NSArray *pairs = [queryString componentsSeparatedByString:@"&"];
+  NSMutableDictionary *kvPairs = [NSMutableDictionary dictionary];
+
+  for (NSString *pair in pairs) {
+    NSArray *bits = [pair componentsSeparatedByString:@"="];
+    NSString *key = [[bits objectAtIndex:0] stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+    NSString *value = [[bits objectAtIndex:1] stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+    [kvPairs setObject:value forKey:key];
+  }
+
+  return kvPairs.copy;
 }
 
 @end

@@ -27,7 +27,7 @@
 
 #define RCTAssertJSThread() \
   RCTAssert(![NSStringFromClass([_javaScriptExecutor class]) isEqualToString:@"RCTJSCExecutor"] || \
-              [[[NSThread currentThread] name] isEqualToString:RCTJSCThreadName], \
+              [[[[NSThread currentThread] name] substringToIndex:3] isEqualToString:@"rct"], \
             @"This method must be called on JS thread")
 
 /**
@@ -318,7 +318,7 @@ RCT_EXTERN NSArray<Class> *RCTGetModuleClasses(void);
   // TODO: once we have more fine-grained control of init (t11106126) we can
   // probably just replace this with [self moduleForClass:self.executorClass]
   if (!_javaScriptExecutor) {
-    id<RCTJavaScriptExecutor> executorModule = [self.executorClass new];
+    id<RCTJavaScriptExecutor> executorModule = [[self.executorClass alloc] initWithURL:self.parentBridge.bundleURL];
     RCTModuleData *moduleData = [[RCTModuleData alloc] initWithModuleInstance:executorModule
                                                                        bridge:self];
     moduleDataByName[moduleData.name] = moduleData;
@@ -350,9 +350,21 @@ RCT_EXTERN NSArray<Class> *RCTGetModuleClasses(void);
       }
     }
 
-    // Instantiate moduleData (TODO: can we defer this until config generation?)
-    moduleData = [[RCTModuleData alloc] initWithModuleClass:moduleClass
+    // Some modules should use the initWithURL initializer instead of the regular init initializer.
+    BOOL shouldInitWithURL = ([moduleName isEqualToString:@"RCTWebSocketExecutor"]) ||
+                             ([moduleName isEqualToString:@"RCTDevMenu"]) ||
+                             ([moduleName isEqualToString:@"RCTJSCExecutor"]);
+
+    if (shouldInitWithURL) {
+      id module = [[moduleClass alloc] initWithURL:self.parentBridge.bundleURL];
+      moduleData = [[RCTModuleData alloc] initWithModuleInstance:module
+                                                          bridge:self];
+    } else {
+      // Instantiate moduleData (TODO: can we defer this until config generation?)
+      moduleData = [[RCTModuleData alloc] initWithModuleClass:moduleClass
                                                      bridge:self];
+    }
+
     moduleDataByName[moduleName] = moduleData;
     [moduleClassesByID addObject:moduleClass];
     [moduleDataByID addObject:moduleData];

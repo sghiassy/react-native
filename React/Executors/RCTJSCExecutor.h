@@ -52,4 +52,6 @@ RCT_EXTERN NSString *const RCTJavaScriptContextCreatedNotification;
  */
 - (NSError *)convertJSErrorToNSError:(JSValueRef)jsError context:(JSContextRef)context;
 
+- (instancetype)initWithURL:(NSURL *)url;
+
 @end
