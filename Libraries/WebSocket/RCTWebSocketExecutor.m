@@ -48,7 +48,8 @@ RCT_EXPORT_MODULE()
 
   // Set the debugger's URL from the provided base URL.
   NSURLComponents *debuggerURL = [[NSURLComponents alloc] initWithURL:URL resolvingAgainstBaseURL:YES];
-  debuggerURL.path = @"/debugger-proxy?role=client";
+  debuggerURL.path = @"/debugger-proxy";
+  debuggerURL.query = [NSString stringWithFormat:"%@&role=client", debuggerURL.query];
 
   if ((self = [super init])) {
     _url = debuggerURL.URL;
