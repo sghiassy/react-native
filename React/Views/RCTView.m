@@ -119,13 +119,17 @@ static NSString *RCTRecursiveAccessibilityLabel(UIView *view)
 
 RCT_NOT_IMPLEMENTED(- (instancetype)initWithCoder:unused)
 
-- (NSString *)accessibilityLabel
-{
-  if (super.accessibilityLabel) {
-    return super.accessibilityLabel;
-  }
-  return RCTRecursiveAccessibilityLabel(self);
-}
+/**
+ * Disabiling Custom Accessbility Label's: https://jira.groupondev.com/browse/REBEL-209
+ * We want to use the custom default ones
+ */
+// - (NSString *)accessibilityLabel
+// {
+//   if (super.accessibilityLabel) {
+//     return super.accessibilityLabel;
+//   }
+//   return RCTRecursiveAccessibilityLabel(self);
+// }
 
 - (void)setPointerEvents:(RCTPointerEvents)pointerEvents
 {
