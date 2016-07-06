@@ -217,7 +217,7 @@ RCT_EXPORT_MODULE()
     [commands registerKeyCommandWithInput:@"d"
                             modifierFlags:UIKeyModifierCommand
                                    action:^(__unused UIKeyCommand *command) {
-                                     [weakSelf toggle];
+                                     [[NSNotificationCenter defaultCenter] postNotificationName:RCTShowDevMenuNotification object:nil];
                                    }];
 
     // Toggle element inspector
