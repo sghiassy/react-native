@@ -155,10 +155,10 @@ RCT_NOT_IMPLEMENTED(- (instancetype)init)
 {
   RCTAssertMainThread();
 
-  [[NSNotificationCenter defaultCenter] addObserver:self
-                                           selector:@selector(reload)
-                                               name:RCTReloadNotification
-                                             object:nil];
+  // [[NSNotificationCenter defaultCenter] addObserver:self
+  //                                          selector:@selector(reload)
+  //                                              name:RCTReloadNotification
+  //                                            object:nil];
 
 #if TARGET_IPHONE_SIMULATOR
   RCTKeyCommands *commands = [RCTKeyCommands sharedInstance];
