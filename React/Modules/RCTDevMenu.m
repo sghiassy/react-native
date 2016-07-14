@@ -21,6 +21,9 @@
 #import "RCTUtils.h"
 #import "RCTWebSocketProxy.h"
 
+static BOOL hasShownDisabledDebugAlert = NO;
+
+
 #if RCT_DEV
 
 static NSString *const RCTShowDevMenuNotification = @"RCTShowDevMenuNotification";
@@ -514,6 +517,23 @@ RCT_EXPORT_METHOD(show)
     return;
   }
 
+  BOOL inBuildMode = _bundleURL.fileURL; // syntactic sugar
+
+  if (inBuildMode) {
+    if (!hasShownDisabledDebugAlert) {
+      /**
+       * Each service is going to try to show its own debug menu. But we only want
+       * one alert this instance, so we introduce the variable `hasShownDisabledDebugAlert`
+       */
+      hasShownDisabledDebugAlert = YES;
+      [RCTDevMenu presentAlert:@"Debugging Disabled. See 'runMode' in Capacitorfile" onComplete:^{
+          hasShownDisabledDebugAlert = NO;
+      }];
+    }
+
+    return;
+  }
+
   UIActionSheet *actionSheet = [UIActionSheet new];
   actionSheet.title = [NSString stringWithFormat:@"RN Dev: %@:%@", _bundleURL.host, _bundleURL.port];
   actionSheet.delegate = self;
@@ -686,6 +706,21 @@ RCT_EXPORT_METHOD(reload)
   }];
 
   [_updateTask resume];
+}
+
+#pragma mark - Helper Methods
+
++ (void)presentAlert:(NSString *)title onComplete:(void(^)(void))onComplete {
+  UIAlertController *alert = [[UIAlertController alloc] init];
+  alert.title = title;
+  UIAlertAction *ok = [UIAlertAction actionWithTitle:@"ok" style:0 handler:^(UIAlertAction * _Nonnull action) {
+      if (onComplete) {
+          onComplete();
+      }
+  }];
+  [alert addAction:ok];
+
+  [[[[UIApplication sharedApplication] keyWindow] rootViewController] presentViewController:alert animated:YES completion:nil]; // Present VC
 }
 
 @end
