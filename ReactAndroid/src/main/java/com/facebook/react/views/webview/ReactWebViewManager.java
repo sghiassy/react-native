@@ -18,6 +18,7 @@ import java.util.Map;
 import android.graphics.Bitmap;
 import android.os.Build;
 import android.text.TextUtils;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.WebChromeClient;
@@ -180,6 +181,9 @@ public class ReactWebViewManager extends SimpleViewManager<WebView> {
    * to call {@link WebView#destroy} on activty destroy event and also to clear the client
    */
   private static class ReactWebView extends WebView implements LifecycleEventListener {
+    public static final String JAVASCRIPT_INTERFACE_NAME = "JS_INTERFACE";
+    private static final String JAVASCRIPT_INTERFACE_METHOD = "processInjectedJavaScript";
+
     private @Nullable String injectedJS;
 
     /**
@@ -216,13 +220,40 @@ public class ReactWebViewManager extends SimpleViewManager<WebView> {
       if (getSettings().getJavaScriptEnabled() &&
           injectedJS != null &&
           !TextUtils.isEmpty(injectedJS)) {
-        loadUrl("javascript:(function() {\n" + injectedJS + ";\n})();");
+        loadUrl("javascript:window."
+          + JAVASCRIPT_INTERFACE_NAME + "." + JAVASCRIPT_INTERFACE_METHOD
+          + "(" + injectedJS + ");");
       }
     }
 
     private void cleanupCallbacksAndDestroy() {
       setWebViewClient(null);
       destroy();
+    }
+
+    @JavascriptInterface
+    @SuppressWarnings("unused")
+    public void processInjectedJavaScript(final String jsEvaluationValue) {
+      dispatchEvent(
+        this,
+        new TopLoadingFinishEvent(
+          getId(),
+          SystemClock.nanoTime(),
+          createWebViewEvent(this, jsEvaluationValue)));
+    }
+
+    private static void dispatchEvent(WebView webView, Event event) {
+      ReactContext reactContext = (ReactContext) webView.getContext();
+      EventDispatcher eventDispatcher =
+        reactContext.getNativeModule(UIManagerModule.class).getEventDispatcher();
+      eventDispatcher.dispatchEvent(event);
+    }
+
+    private WritableMap createWebViewEvent(WebView webView, String jsEvaluationValue) {
+      WritableMap event = Arguments.createMap();
+      event.putDouble("target", webView.getId());
+      event.putString("jsEvaluationValue", jsEvaluationValue);
+      return event;
     }
   }
 
@@ -246,6 +277,7 @@ public class ReactWebViewManager extends SimpleViewManager<WebView> {
   protected WebView createViewInstance(ThemedReactContext reactContext) {
     ReactWebView webView = new ReactWebView(reactContext);
     webView.setWebChromeClient(new WebChromeClient());
+    webView.addJavascriptInterface(webView, ReactWebView.JAVASCRIPT_INTERFACE_NAME);
     reactContext.addLifecycleEventListener(webView);
     mWebViewConfig.configWebView(webView);
 
