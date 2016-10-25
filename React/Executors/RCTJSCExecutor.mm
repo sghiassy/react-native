@@ -211,12 +211,15 @@ static void RCTInstallJSCProfiler(RCTBridge *bridge, JSContextRef context)
   }
 }
 
-static NSThread *newJavaScriptThread(void)
+static NSThread *newJavaScriptThread(NSURL *url)
 {
   NSThread *javaScriptThread = [[NSThread alloc] initWithTarget:[RCTJSCExecutor class]
                                                        selector:@selector(runRunLoopThread)
                                                          object:nil];
-  javaScriptThread.name = RCTJSCThreadName;
+  NSDictionary *queryParameters = [RCTJSCExecutor queryDictionaryForURL:url];
+  NSString *threadName = [NSString stringWithFormat:@"rct.%@", [queryParameters objectForKey:@"domain"]];
+  javaScriptThread.name = threadName;
+  
   if ([javaScriptThread respondsToSelector:@selector(setQualityOfService:)]) {
     [javaScriptThread setQualityOfService:NSOperationQualityOfServiceUserInteractive];
   } else {
@@ -234,17 +237,26 @@ static NSThread *newJavaScriptThread(void)
 
 - (instancetype)init
 {
-  return [self initWithUseCustomJSCLibrary:NO];
+  NSAssert(0, @"Don't use this. Use initWithURL instead");
+  return [self initWithURL:nil];
+}
+
+- (instancetype)initWithURL:(NSURL *)url
+{
+  return [self initWithUseCustomJSCLibrary:NO url:url];
 }
 
 - (instancetype)initWithUseCustomJSCLibrary:(BOOL)useCustomJSCLibrary
+                                        url:(NSURL *)url
 {
   return [self initWithUseCustomJSCLibrary:useCustomJSCLibrary
-                               tryBytecode:NO];
+                               tryBytecode:NO
+                                       url:url];
 }
 
 - (instancetype)initWithUseCustomJSCLibrary:(BOOL)useCustomJSCLibrary
                                 tryBytecode:(BOOL)tryBytecode
+                                        url:(NSURL *)url
 {
   RCT_PROFILE_BEGIN_EVENT(0, @"-[RCTJSCExecutor init]", nil);
 
@@ -252,7 +264,7 @@ static NSThread *newJavaScriptThread(void)
     _useCustomJSCLibrary = useCustomJSCLibrary;
     _tryBytecode = tryBytecode;
     _valid = YES;
-    _javaScriptThread = newJavaScriptThread();
+    _javaScriptThread = newJavaScriptThread(url);
   }
 
   RCT_PROFILE_END_EVENT(RCTProfileTagAlways, @"");
@@ -1008,6 +1020,23 @@ static NSData *loadRAMBundle(NSURL *sourceURL, NSError **error, RandomAccessBund
   return [self context].context;
 }
 
+#pragma mark - Helper Functions
+
++ (NSDictionary *)queryDictionaryForURL:(NSURL *)url {
+  NSString *queryString = [url query];
+  NSArray *pairs = [queryString componentsSeparatedByString:@"&"];
+  NSMutableDictionary *kvPairs = [NSMutableDictionary dictionary];
+  
+  for (NSString *pair in pairs) {
+    NSArray *bits = [pair componentsSeparatedByString:@"="];
+    NSString *key = [[bits objectAtIndex:0] stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+    NSString *value = [[bits objectAtIndex:1] stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+    [kvPairs setObject:value forKey:key];
+  }
+  
+  return kvPairs.copy;
+}
+
 @end
 
 @implementation RCTJSContextProvider
@@ -1020,12 +1049,13 @@ static NSData *loadRAMBundle(NSURL *sourceURL, NSError **error, RandomAccessBund
 
 - (instancetype)initWithUseCustomJSCLibrary:(BOOL)useCustomJSCLibrary
                                 tryBytecode:(BOOL)tryBytecode
+                                        url:(NSURL *)url
 {
   if (self = [super init]) {
     _semaphore = dispatch_semaphore_create(0);
     _useCustomJSCLibrary = useCustomJSCLibrary;
     _tryBytecode = tryBytecode;
-    _javaScriptThread = newJavaScriptThread();
+    _javaScriptThread = newJavaScriptThread(url);
     [self performSelector:@selector(_createContext) onThread:_javaScriptThread withObject:nil waitUntilDone:NO];
   }
   return self;

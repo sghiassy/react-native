@@ -22,10 +22,12 @@
 #import "RCTUtils.h"
 #import "RCTWebSocketProxy.h"
 
+static BOOL hasShownDisabledDebugAlert = NO;
+
+
 #if RCT_DEV
 
 static NSString *const RCTShowDevMenuNotification = @"RCTShowDevMenuNotification";
-static NSString *const RCTDevMenuSettingsKey = @"RCTDevMenu";
 
 @implementation UIWindow (RCTDevMenu)
 
@@ -137,6 +139,7 @@ RCT_NOT_IMPLEMENTED(- (instancetype)init)
   NSMutableArray<RCTDevMenuItem *> *_extraMenuItems;
   NSString *_webSocketExecutorName;
   NSString *_executorOverride;
+  NSURL *_bundleURL;
 }
 
 @synthesize bridge = _bridge;
@@ -153,7 +156,15 @@ RCT_EXPORT_MODULE()
 
 - (instancetype)init
 {
+  NSAssert(false, @"Don't use this");
+  return [self initWithURL:nil];
+}
+
+- (instancetype)initWithURL:(NSURL *)url
+{
   if ((self = [super init])) {
+    
+    _bundleURL = [url copy];
 
     NSNotificationCenter *notificationCenter = [NSNotificationCenter defaultCenter];
 
@@ -173,7 +184,7 @@ RCT_EXPORT_MODULE()
                              object:nil];
 
     _defaults = [NSUserDefaults standardUserDefaults];
-    _settings = [[NSMutableDictionary alloc] initWithDictionary:[_defaults objectForKey:RCTDevMenuSettingsKey]];
+    _settings = [[NSMutableDictionary alloc] initWithDictionary:[_defaults objectForKey:self.devMenuSettingsKey]];
     _extraMenuItems = [NSMutableArray new];
 
     __weak RCTDevMenu *weakSelf = self;
@@ -298,7 +309,7 @@ RCT_EXPORT_MODULE()
 {
   // Needed to prevent a race condition when reloading
   __weak RCTDevMenu *weakSelf = self;
-  NSDictionary *settings = [_defaults objectForKey:RCTDevMenuSettingsKey];
+  NSDictionary *settings = [_defaults objectForKey:self.devMenuSettingsKey];
   dispatch_async(dispatch_get_main_queue(), ^{
     [weakSelf updateSettings:settings];
   });
@@ -362,7 +373,7 @@ RCT_EXPORT_MODULE()
   } else {
     [_settings removeObjectForKey:name];
   }
-  [_defaults setObject:_settings forKey:RCTDevMenuSettingsKey];
+  [_defaults setObject:_settings forKey:self.devMenuSettingsKey];
   [_defaults synchronize];
 }
 
@@ -500,13 +511,35 @@ RCT_EXPORT_MODULE()
   return items;
 }
 
+- (NSString *)devMenuSettingsKey
+{
+  return [NSString stringWithFormat:@"RCTDevMenu.%@:%@", _bundleURL.host, _bundleURL.port.stringValue];
+}
+
 RCT_EXPORT_METHOD(show)
 {
   if (_actionSheet || !_bridge || RCTRunningInAppExtension()) {
     return;
   }
-
-  NSString *title = [NSString stringWithFormat:@"React Native: Development (%@)", [_bridge class]];
+  
+  BOOL inBuildMode = _bundleURL.fileURL; // syntactic sugar
+  
+  if (inBuildMode) {
+    if (!hasShownDisabledDebugAlert) {
+      /**
+       * Each service is going to try to show its own debug menu. But we only want
+       * one alert this instance, so we introduce the variable `hasShownDisabledDebugAlert`
+       */
+      hasShownDisabledDebugAlert = YES;
+      [RCTDevMenu presentAlert:@"Debugging Disabled. See 'runMode' in Capacitorfile" onComplete:^{
+        hasShownDisabledDebugAlert = NO;
+      }];
+    }
+    
+    return;
+  }
+  
+  NSString *title = [NSString stringWithFormat:@"RN Dev: %@:%@", _bundleURL.host, _bundleURL.port];
   // On larger devices we don't have an anchor point for the action sheet
   UIAlertControllerStyle style = [[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone ? UIAlertControllerStyleActionSheet : UIAlertControllerStyleAlert;
   _actionSheet = [UIAlertController alertControllerWithTitle:title
@@ -673,6 +706,22 @@ RCT_EXPORT_METHOD(setHotLoadingEnabled:(BOOL)enabled)
   }];
 
   [_updateTask resume];
+}
+
+#pragma mark - Helper Methods
+
++ (void)presentAlert:(NSString *)title onComplete:(void(^)(void))onComplete
+{
+  UIAlertController *alert = [[UIAlertController alloc] init];
+  alert.title = title;
+  UIAlertAction *ok = [UIAlertAction actionWithTitle:@"ok" style:0 handler:^(UIAlertAction * _Nonnull action) {
+    if (onComplete) {
+      onComplete();
+    }
+  }];
+  [alert addAction:ok];
+  
+  [[[[UIApplication sharedApplication] keyWindow] rootViewController] presentViewController:alert animated:YES completion:nil]; // Present VC
 }
 
 @end
