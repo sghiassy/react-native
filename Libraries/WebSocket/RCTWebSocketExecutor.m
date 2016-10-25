@@ -39,12 +39,23 @@ RCT_EXPORT_MODULE()
 
 @synthesize bridge = _bridge;
 
+- (instancetype)init
+{
+  NSAssert(false, @"Don't use this. Use initWithURL instead");
+  return [self initWithURL:nil];
+}
+
 - (instancetype)initWithURL:(NSURL *)URL
 {
   RCTAssertParam(URL);
 
-  if ((self = [self init])) {
-    _url = URL;
+  // Set the debugger's URL from the provided base URL.
+  NSURLComponents *debuggerURL = [[NSURLComponents alloc] initWithURL:URL resolvingAgainstBaseURL:YES];
+  debuggerURL.path = @"/debugger-proxy";
+  debuggerURL.query = [NSString stringWithFormat:@"%@&role=client", debuggerURL.query];
+  
+  if ((self = [super init])) {
+    _url = debuggerURL.URL;
   }
   return self;
 }
