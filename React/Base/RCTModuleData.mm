@@ -93,7 +93,19 @@ RCT_NOT_IMPLEMENTED(- (instancetype)init);
           RCTAssertMainQueue();
         }
         RCT_PROFILE_BEGIN_EVENT(RCTProfileTagAlways, @"[RCTModuleData setUpInstanceAndBridge] [_moduleClass new]",  @{ @"moduleClass": NSStringFromClass(_moduleClass) });
-        _instance = [_moduleClass new];
+        
+        NSString *moduleName = NSStringFromClass(_moduleClass);
+        // Some modules should use the initWithURL initializer instead of the regular init initializer.
+        BOOL shouldInitWithURL = ([moduleName isEqualToString:@"RCTWebSocketExecutor"]) ||
+        ([moduleName isEqualToString:@"RCTDevMenu"]) ||
+        ([moduleName isEqualToString:@"RCTJSCExecutor"]);
+        
+        if (shouldInitWithURL) {
+          _instance = [[_moduleClass alloc] initWithURL:_bridge.bundleURL];
+        } else {
+          _instance = [_moduleClass new];
+        }
+
         RCT_PROFILE_END_EVENT(RCTProfileTagAlways, @"");
         if (!_instance) {
           // Module init returned nil, probably because automatic instantatiation

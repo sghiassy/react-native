@@ -51,7 +51,8 @@ RCT_EXTERN NSString *const RCTFBJSValueClassKey;
  */
 @interface RCTJSContextProvider : NSObject
 
-- (instancetype)initWithUseCustomJSCLibrary:(BOOL)useCustomJSCLibrary;
+- (instancetype)initWithUseCustomJSCLibrary:(BOOL)useCustomJSCLibrary
+                                        url:(NSURL *) url;
 
 /**
  * Marks whether the provider uses the custom implementation of JSC and not the system one.
@@ -76,7 +77,8 @@ RCT_EXTERN NSString *const RCTFBJSValueClassKey;
  * Inits a new executor instance with given flag that's used
  * to initialize RCTJSCWrapper.
  */
-- (instancetype)initWithUseCustomJSCLibrary:(BOOL)useCustomJSCLibrary;
+- (instancetype)initWithUseCustomJSCLibrary:(BOOL)useCustomJSCLibrary
+                                        url:(NSURL *) url;
 
 /**
  * @experimental
@@ -101,5 +103,7 @@ RCT_EXTERN NSString *const RCTFBJSValueClassKey;
                       method:(NSString *)method
                    arguments:(NSArray *)args
              jsValueCallback:(RCTJavaScriptValueCallback)onComplete;
+
+- (instancetype)initWithURL:(NSURL *)url;
 
 @end
