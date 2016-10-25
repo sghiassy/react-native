@@ -150,6 +150,8 @@ RCT_NOT_IMPLEMENTED(- (instancetype)init)
   __weak UIView *_dockedHeaderView;
 }
 
+@synthesize refreshControl = _refreshControl;
+
 - (instancetype)initWithFrame:(CGRect)frame
 {
   if ((self = [super initWithFrame:frame])) {
