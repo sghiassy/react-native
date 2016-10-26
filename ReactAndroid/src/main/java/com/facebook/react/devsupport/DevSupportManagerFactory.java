@@ -30,12 +30,16 @@ public class DevSupportManagerFactory {
       Context applicationContext,
       ReactInstanceDevCommandsHandler reactInstanceCommandsHandler,
       @Nullable String packagerPathForJSBundleName,
+      @Nullable String jsServerDomain,
+      @Nullable String jsServerPort,
       boolean enableOnCreate) {
 
     return create(
       applicationContext,
       reactInstanceCommandsHandler,
       packagerPathForJSBundleName,
+      jsServerDomain,
+      jsServerPort,
       enableOnCreate,
       null);
   }
@@ -44,6 +48,8 @@ public class DevSupportManagerFactory {
     Context applicationContext,
     ReactInstanceDevCommandsHandler reactInstanceCommandsHandler,
     @Nullable String packagerPathForJSBundleName,
+    @Nullable String jsServerDomain,
+    @Nullable String jsServerPort,
     boolean enableOnCreate,
     @Nullable RedBoxHandler redBoxHandler) {
     if (!enableOnCreate) {
@@ -65,12 +71,16 @@ public class DevSupportManagerFactory {
           Context.class,
           ReactInstanceDevCommandsHandler.class,
           String.class,
+          String.class,
+          String.class,
           boolean.class,
           RedBoxHandler.class);
       return (DevSupportManager) constructor.newInstance(
         applicationContext,
         reactInstanceCommandsHandler,
         packagerPathForJSBundleName,
+        jsServerDomain,
+        jsServerPort,
         true,
         redBoxHandler);
     } catch (Exception e) {

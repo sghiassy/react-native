@@ -63,6 +63,7 @@ public class ReactRootView extends SizeMonitoringFrameLayout implements RootView
   private int mRootViewTag;
   private boolean mWasMeasured = false;
   private boolean mIsAttachedToInstance = false;
+  private boolean mIsAttachedToRunningService = false;
   private final JSTouchDispatcher mJSTouchDispatcher = new JSTouchDispatcher(this);
 
   public ReactRootView(Context context) {
@@ -75,6 +76,14 @@ public class ReactRootView extends SizeMonitoringFrameLayout implements RootView
 
   public ReactRootView(Context context, AttributeSet attrs, int defStyle) {
     super(context, attrs, defStyle);
+  }
+
+  public void setIsAttachedToInstance(boolean isAttachedToInstance) {
+    mIsAttachedToInstance = isAttachedToInstance;
+  }
+
+  public void setIsAttachedToRunningService(boolean isAttachedToRunningService) {
+    mIsAttachedToRunningService = isAttachedToRunningService;
   }
 
   @Override
@@ -90,7 +99,9 @@ public class ReactRootView extends SizeMonitoringFrameLayout implements RootView
       UiThreadUtil.runOnUiThread(new Runnable() {
         @Override
         public void run() {
-          attachToReactInstanceManager();
+          if (!mIsAttachedToRunningService) {
+            attachToReactInstanceManager();
+          }
         }
       });
     }

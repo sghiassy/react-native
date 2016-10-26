@@ -10,6 +10,7 @@
 package com.facebook.react.bridge.queue;
 
 import android.os.Build;
+import android.text.TextUtils;
 
 import javax.annotation.Nullable;
 
@@ -47,14 +48,28 @@ public class ReactQueueConfigurationSpec {
     return new Builder();
   }
 
-  public static ReactQueueConfigurationSpec createDefault() {
+  public static ReactQueueConfigurationSpec createDefault(String serverDomain, String serverPort) {
+    String nativeModulesThreadName = generateThreadName("native_modules", serverDomain, serverPort);
+    String jsThreadName = generateThreadName("js", serverDomain, serverPort);
+
     MessageQueueThreadSpec spec = Build.VERSION.SDK_INT < 21 ?
-        MessageQueueThreadSpec.newBackgroundThreadSpec("native_modules", LEGACY_STACK_SIZE_BYTES) :
-        MessageQueueThreadSpec.newBackgroundThreadSpec("native_modules");
+        MessageQueueThreadSpec.newBackgroundThreadSpec(nativeModulesThreadName, LEGACY_STACK_SIZE_BYTES) :
+        MessageQueueThreadSpec.newBackgroundThreadSpec(nativeModulesThreadName);
     return builder()
-        .setJSQueueThreadSpec(MessageQueueThreadSpec.newBackgroundThreadSpec("js"))
+        .setJSQueueThreadSpec(MessageQueueThreadSpec.newBackgroundThreadSpec(jsThreadName))
         .setNativeModulesQueueThreadSpec(spec)
         .build();
+  }
+
+  private static String generateThreadName(String threadType, String serverDomain, String serverPort) {
+    StringBuilder stringBuilder = new StringBuilder(threadType);
+    if (!TextUtils.isEmpty(serverDomain)) {
+      stringBuilder.append("_").append(serverDomain);
+    }
+    if (!TextUtils.isEmpty(serverPort)) {
+      stringBuilder.append(":").append(serverPort);
+    }
+    return stringBuilder.toString();
   }
 
   public static class Builder {

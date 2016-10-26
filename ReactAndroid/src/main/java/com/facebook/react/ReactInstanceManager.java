@@ -160,6 +160,14 @@ public abstract class ReactInstanceManager {
   public abstract String getSourceUrl();
 
   /**
+   * Attach given {@param rootView} to a catalyst instance manager and start JS application by
+   * setting the {@param rootView} as attached to a running service, so it won't try to re-attach
+   * after being measured for rendering, or to detach from the catalyst instance once the view is
+   * detached from the window.
+   */
+  public abstract void attachToCatalystInstance(ReactRootView rootView);
+
+  /**
    * The JS Bundle file that this Instance Manager was constructed with.
    */
   public abstract @Nullable String getJSBundleFile();
@@ -224,6 +232,8 @@ public abstract class ReactInstanceManager {
     protected @Nullable String mJSBundleAssetUrl;
     protected @Nullable JSBundleLoader mJSBundleLoader;
     protected @Nullable String mJSMainModuleName;
+    protected @Nullable String mJSServerPort;
+    protected @Nullable String mJSServerDomain;
     protected @Nullable NotThreadSafeBridgeIdleDebugListener mBridgeIdleDebugListener;
     protected @Nullable Application mApplication;
     protected boolean mUseDeveloperSupport;
@@ -296,6 +306,23 @@ public abstract class ReactInstanceManager {
      */
     public Builder setJSMainModuleName(String jsMainModuleName) {
       mJSMainModuleName = jsMainModuleName;
+      return this;
+    }
+
+    /**
+     * The server's domain name.
+     */
+    public Builder setJSServerDomain(String jsServerDomain) {
+      mJSServerDomain = jsServerDomain;
+      return this;
+    }
+
+    /**
+     * Set the port used by the development server.
+     * If not set, the default port will be used: 8081.
+     */
+    public Builder setJSServerPort(String jsServerPort) {
+      mJSServerPort = jsServerPort;
       return this;
     }
 
@@ -413,6 +440,8 @@ public abstract class ReactInstanceManager {
         (mJSBundleLoader == null && mJSBundleAssetUrl != null) ?
           JSBundleLoader.createAssetLoader(mApplication, mJSBundleAssetUrl) : mJSBundleLoader,
         mJSMainModuleName,
+        mJSServerDomain,
+        mJSServerPort,
         mPackages,
         mUseDeveloperSupport,
         mBridgeIdleDebugListener,

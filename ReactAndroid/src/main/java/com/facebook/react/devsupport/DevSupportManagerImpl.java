@@ -34,6 +34,7 @@ import android.content.pm.PackageManager;
 import android.hardware.SensorManager;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.text.TextUtils;
 import android.view.WindowManager;
 import android.widget.Toast;
 
@@ -89,7 +90,7 @@ public class DevSupportManagerImpl implements DevSupportManager, PackagerCommand
 
   private static final int JAVA_ERROR_COOKIE = -1;
   private static final int JSEXCEPTION_ERROR_COOKIE = -1;
-  private static final String JS_BUNDLE_FILE_NAME = "ReactNativeDevBundle.js";
+  private static final String JS_BUNDLE_FILE_NAME_FORMAT = "ReactNativeDevBundle:%s.js";
   private static enum ErrorType {
     JS,
     NATIVE
@@ -106,6 +107,8 @@ public class DevSupportManagerImpl implements DevSupportManager, PackagerCommand
       new LinkedHashMap<>();
   private final ReactInstanceDevCommandsHandler mReactInstanceCommandsHandler;
   private final @Nullable String mJSAppBundleName;
+  private final @Nullable String mJSServerDomain;
+  private final @Nullable String mJSServerPort;
   private final File mJSBundleTempFile;
   private final DefaultNativeModuleCallExceptionHandler mDefaultNativeModuleCallExceptionHandler;
 
@@ -160,11 +163,15 @@ public class DevSupportManagerImpl implements DevSupportManager, PackagerCommand
     Context applicationContext,
     ReactInstanceDevCommandsHandler reactInstanceCommandsHandler,
     @Nullable String packagerPathForJSBundleName,
+    @Nullable String jsServerDomain,
+    @Nullable String jsServerPort,
     boolean enableOnCreate) {
 
     this(applicationContext,
       reactInstanceCommandsHandler,
       packagerPathForJSBundleName,
+      jsServerDomain,
+      jsServerPort,
       enableOnCreate,
       null);
   }
@@ -173,14 +180,18 @@ public class DevSupportManagerImpl implements DevSupportManager, PackagerCommand
       Context applicationContext,
       ReactInstanceDevCommandsHandler reactInstanceCommandsHandler,
       @Nullable String packagerPathForJSBundleName,
+      @Nullable String jsServerDomain,
+      @Nullable String jsServerPort,
       boolean enableOnCreate,
       @Nullable RedBoxHandler redBoxHandler) {
 
     mReactInstanceCommandsHandler = reactInstanceCommandsHandler;
     mApplicationContext = applicationContext;
     mJSAppBundleName = packagerPathForJSBundleName;
+    mJSServerDomain = jsServerDomain;
+    mJSServerPort = jsServerPort;
     mDevSettings = new DevInternalSettings(applicationContext, this);
-    mDevServerHelper = new DevServerHelper(mDevSettings);
+    mDevServerHelper = new DevServerHelper(mDevSettings, jsServerPort);
 
     // Prepare shake gesture detector (will be started/stopped from #reload)
     mShakeDetector = new ShakeDetector(new ShakeDetector.ShakeListener() {
@@ -212,7 +223,8 @@ public class DevSupportManagerImpl implements DevSupportManager, PackagerCommand
     // start reading first reload output while the second reload starts writing to the same
     // file. As this should only be the case in dev mode we leave it as it is.
     // TODO(6418010): Fix readers-writers problem in debug reload from HTTP server
-    mJSBundleTempFile = new File(applicationContext.getFilesDir(), JS_BUNDLE_FILE_NAME);
+    final String jsBundleTempFileName = String.format(JS_BUNDLE_FILE_NAME_FORMAT, jsServerPort);
+    mJSBundleTempFile = new File(applicationContext.getFilesDir(), jsBundleTempFileName);
 
     mDefaultNativeModuleCallExceptionHandler = new DefaultNativeModuleCallExceptionHandler();
 
@@ -465,6 +477,7 @@ public class DevSupportManagerImpl implements DevSupportManager, PackagerCommand
 
     mDevOptionsDialog =
         new AlertDialog.Builder(mApplicationContext)
+            .setTitle(getDevOptionsDialogTitle())
             .setItems(
                 options.keySet().toArray(new String[0]),
                 new DialogInterface.OnClickListener() {
@@ -483,6 +496,17 @@ public class DevSupportManagerImpl implements DevSupportManager, PackagerCommand
             .create();
     mDevOptionsDialog.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
     mDevOptionsDialog.show();
+  }
+
+  private String getDevOptionsDialogTitle() {
+    StringBuilder titleBuilder = new StringBuilder();
+    if (!TextUtils.isEmpty(mJSServerDomain)) {
+      titleBuilder.append(mJSServerDomain);
+      if (!TextUtils.isEmpty(mJSServerPort)) {
+        titleBuilder.append(":").append(mJSServerPort);
+      }
+    }
+    return titleBuilder.toString();
   }
 
   /**
