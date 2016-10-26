@@ -34,13 +34,18 @@ import com.facebook.react.uimanager.annotations.ReactPropGroup;
     protected final Method mSetter;
     protected final @Nullable Integer mIndex; /* non-null only for group setters */
 
+    // (REBEL-837) Temporarily commented out the arrays below due to a concurrency error caused by
+    // the fact that we are updating the properties from multiple threads when initializing multiple
+    // dependencies of a service.
+    // TODO: find a better solution than this!
+
     // The following Object arrays are used to prevent extra allocations from varargs when we call
     // Method.invoke. It's safe for those objects to be static as we update properties in a single
     // thread sequentially
-    private static final Object[] VIEW_MGR_ARGS = new Object[2];
-    private static final Object[] VIEW_MGR_GROUP_ARGS = new Object[3];
-    private static final Object[] SHADOW_ARGS = new Object[1];
-    private static final Object[] SHADOW_GROUP_ARGS = new Object[2];
+    //private static final Object[] VIEW_MGR_ARGS = new Object[2];
+    //private static final Object[] VIEW_MGR_GROUP_ARGS = new Object[3];
+    //private static final Object[] SHADOW_ARGS = new Object[1];
+    //private static final Object[] SHADOW_GROUP_ARGS = new Object[2];
 
     private PropSetter(ReactProp prop, String defaultType, Method setter) {
       mPropName = prop.name();
@@ -72,16 +77,16 @@ import com.facebook.react.uimanager.annotations.ReactPropGroup;
         ReactStylesDiffMap props) {
       try {
         if (mIndex == null) {
-          VIEW_MGR_ARGS[0] = viewToUpdate;
-          VIEW_MGR_ARGS[1] = extractProperty(props);
-          mSetter.invoke(viewManager, VIEW_MGR_ARGS);
-          Arrays.fill(VIEW_MGR_ARGS, null);
+          // VIEW_MGR_ARGS[0] = viewToUpdate;
+          // VIEW_MGR_ARGS[1] = extractProperty(props);
+          mSetter.invoke(viewManager, viewToUpdate, extractProperty(props));
+          // Arrays.fill(VIEW_MGR_ARGS, null);
         } else {
-          VIEW_MGR_GROUP_ARGS[0] = viewToUpdate;
-          VIEW_MGR_GROUP_ARGS[1] = mIndex;
-          VIEW_MGR_GROUP_ARGS[2] = extractProperty(props);
-          mSetter.invoke(viewManager, VIEW_MGR_GROUP_ARGS);
-          Arrays.fill(VIEW_MGR_GROUP_ARGS, null);
+          // VIEW_MGR_GROUP_ARGS[0] = viewToUpdate;
+          // VIEW_MGR_GROUP_ARGS[1] = mIndex;
+          // VIEW_MGR_GROUP_ARGS[2] = extractProperty(props);
+          mSetter.invoke(viewManager, viewToUpdate, mIndex, extractProperty(props));
+          // Arrays.fill(VIEW_MGR_GROUP_ARGS, null);
         }
       } catch (Throwable t) {
         FLog.e(ViewManager.class, "Error while updating prop " + mPropName, t);
@@ -95,14 +100,14 @@ import com.facebook.react.uimanager.annotations.ReactPropGroup;
         ReactStylesDiffMap props) {
       try {
         if (mIndex == null) {
-          SHADOW_ARGS[0] = extractProperty(props);
-          mSetter.invoke(nodeToUpdate, SHADOW_ARGS);
-          Arrays.fill(SHADOW_ARGS, null);
+          // SHADOW_ARGS[0] = extractProperty(props);
+          mSetter.invoke(nodeToUpdate, extractProperty(props));
+          // Arrays.fill(SHADOW_ARGS, null);
         } else {
-          SHADOW_GROUP_ARGS[0] = mIndex;
-          SHADOW_GROUP_ARGS[1] = extractProperty(props);
-          mSetter.invoke(nodeToUpdate, SHADOW_GROUP_ARGS);
-          Arrays.fill(SHADOW_GROUP_ARGS, null);
+          // SHADOW_GROUP_ARGS[0] = mIndex;
+          // SHADOW_GROUP_ARGS[1] = extractProperty(props);
+          mSetter.invoke(nodeToUpdate, mIndex, extractProperty(props));
+          // Arrays.fill(SHADOW_GROUP_ARGS, null);
         }
       } catch (Throwable t) {
         FLog.e(ViewManager.class, "Error while updating prop " + mPropName, t);
