@@ -116,6 +116,8 @@ import static com.facebook.systrace.Systrace.TRACE_TAG_REACT_JAVA_BRIDGE;
   /* accessed from any thread */
   private final @Nullable JSBundleLoader mBundleLoader; /* path to JS bundle on file system */
   private final @Nullable String mJSMainModuleName; /* path to JS bundle root on packager server */
+  private final @Nullable String mJSServerDomain; /* the server's domain name */
+  private final @Nullable String mJSServerPort; /* the port used by the development server */
   private final List<ReactPackage> mPackages;
   private final DevSupportManager mDevSupportManager;
   private final boolean mUseDeveloperSupport;
@@ -283,6 +285,8 @@ import static com.facebook.systrace.Systrace.TRACE_TAG_REACT_JAVA_BRIDGE;
     @Nullable DefaultHardwareBackBtnHandler defaultHardwareBackBtnHandler,
     @Nullable JSBundleLoader bundleLoader,
     @Nullable String jsMainModuleName,
+    @Nullable String jsServerDomain,
+    @Nullable String jsServerPort,
     List<ReactPackage> packages,
     boolean useDeveloperSupport,
     @Nullable NotThreadSafeBridgeIdleDebugListener bridgeIdleDebugListener,
@@ -304,12 +308,16 @@ import static com.facebook.systrace.Systrace.TRACE_TAG_REACT_JAVA_BRIDGE;
     mDefaultBackButtonImpl = defaultHardwareBackBtnHandler;
     mBundleLoader = bundleLoader;
     mJSMainModuleName = jsMainModuleName;
+    mJSServerDomain = jsServerDomain;
+    mJSServerPort = jsServerPort;
     mPackages = packages;
     mUseDeveloperSupport = useDeveloperSupport;
     mDevSupportManager = DevSupportManagerFactory.create(
         applicationContext,
         mDevInterface,
         mJSMainModuleName,
+        mJSServerDomain,
+        mJSServerPort,
         useDeveloperSupport,
         redBoxHandler);
     mBridgeIdleDebugListener = bridgeIdleDebugListener;
@@ -644,6 +652,19 @@ import static com.facebook.systrace.Systrace.TRACE_TAG_REACT_JAVA_BRIDGE;
   }
 
   /**
+   * Attach given {@param rootView} to a catalyst instance manager and start JS application by
+   * setting the {@param rootView} as attached to a running service, so it won't try to re-attach
+   * after being measured for rendering, or to detach from the catalyst instance once the view is
+   * detached from the window.
+   */
+  @Override
+  public void attachToCatalystInstance(ReactRootView rootView) {
+    attachMeasuredRootView(rootView);
+    rootView.setIsAttachedToInstance(true);
+    rootView.setIsAttachedToRunningService(true);
+  }
+
+  /**
    * Attach given {@param rootView} to a catalyst instance manager and start JS application using
    * JS module provided by {@link ReactRootView#getJSModuleName}. If the react context is currently
    * being (re)-created, or if react context has not been created yet, the JS application associated
@@ -883,7 +904,7 @@ import static com.facebook.systrace.Systrace.TRACE_TAG_REACT_JAVA_BRIDGE;
         ? mNativeModuleCallExceptionHandler
         : mDevSupportManager;
     CatalystInstanceImpl.Builder catalystInstanceBuilder = new CatalystInstanceImpl.Builder()
-        .setReactQueueConfigurationSpec(ReactQueueConfigurationSpec.createDefault())
+        .setReactQueueConfigurationSpec(ReactQueueConfigurationSpec.createDefault(mJSServerDomain, mJSServerPort))
         .setJSExecutor(jsExecutor)
         .setRegistry(nativeModuleRegistry)
         .setJSModuleRegistry(jsModulesBuilder.build())

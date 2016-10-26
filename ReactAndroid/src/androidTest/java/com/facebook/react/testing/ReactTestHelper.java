@@ -69,7 +69,7 @@ public class ReactTestHelper {
           throw new RuntimeException(e);
         }
         return new CatalystInstanceImpl.Builder()
-          .setReactQueueConfigurationSpec(ReactQueueConfigurationSpec.createDefault())
+          .setReactQueueConfigurationSpec(ReactQueueConfigurationSpec.createDefault(null, null))
           .setJSExecutor(executor)
           .setRegistry(mNativeModuleRegistryBuilder.build())
           .setJSModuleRegistry(mJSModuleRegistryBuilder.build())
